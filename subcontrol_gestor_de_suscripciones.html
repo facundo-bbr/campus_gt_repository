@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SubControl - Gestor de Suscripciones</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            900: '#312e81',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1f2937;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #374151;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #4b5563;
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col selection:bg-brand-500 selection:text-white">
+
+    <!-- Header / Navbar -->
+    <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-30">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-violet-400 flex items-center justify-center text-white shadow-lg shadow-brand-500/20 font-bold text-xl">
+                    <i class="fa-solid font-bold fa-wallet"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg leading-tight tracking-tight text-white">SubControl</h1>
+                    <p class="text-xs text-slate-400">Gestor de Suscripciones</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-3">
+                <!-- Conversion Rate Setting Button -->
+                <div class="bg-slate-800/80 rounded-lg p-1.5 border border-slate-700/60 flex items-center gap-2 text-xs">
+                    <span class="text-slate-400 pl-1 hidden sm:inline">1 USD =</span>
+                    <div class="flex items-center gap-1 bg-slate-900 px-2 py-1 rounded border border-slate-700">
+                        <span class="text-emerald-400 font-semibold">$</span>
+                        <input type="number" id="usdExchangeRate" value="1150" min="1" class="w-14 bg-transparent text-white font-medium text-right focus:outline-none" title="Tipo de cambio ARS/USD">
+                        <span class="text-slate-400 text-[10px]">ARS</span>
+                    </div>
+                </div>
+
+                <button onclick="openModal()" class="bg-brand-600 hover:bg-brand-500 text-white font-medium text-sm px-4 py-2 rounded-xl transition duration-200 flex items-center gap-2 shadow-lg shadow-brand-600/30 active:scale-95">
+                    <i class="fa-solid fa-plus text-xs"></i>
+                    <span class="hidden sm:inline">Nueva Suscripción</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+        <!-- Metrics Dashboard Section -->
+        <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            
+            <!-- Gasto Mensual ARS -->
+            <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 relative overflow-hidden backdrop-blur">
+                <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-brand-500/10 rounded-full blur-xl"></div>
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Gasto Mensual Est.</span>
+                    <span class="text-xs px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-medium">ARS</span>
+                </div>
+                <div class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight" id="metricTotalArs">
+                    $0 <span class="text-sm font-normal text-slate-400">ARS</span>
+                </div>
+                <p class="text-xs text-slate-500 mt-2 flex items-center gap-1">
+                    <i class="fa-solid fa-calculator text-[10px]"></i> Incluye prorrateo anual y USD
+                </p>
+            </div>
+
+            <!-- Gasto Mensual USD -->
+            <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 relative overflow-hidden backdrop-blur">
+                <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-emerald-500/10 rounded-full blur-xl"></div>
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Gasto Mensual Est.</span>
+                    <span class="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-medium">USD</span>
+                </div>
+                <div class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight" id="metricTotalUsd">
+                    $0 <span class="text-sm font-normal text-slate-400">USD</span>
+                </div>
+                <p class="text-xs text-slate-500 mt-2 flex items-center gap-1">
+                    <i class="fa-solid fa-arrows-rotate text-[10px]"></i> Equiv. según cotización actual
+                </p>
+            </div>
+
+            <!-- Suscripciones Activas -->
+            <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 relative overflow-hidden backdrop-blur">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Servicios Activos</span>
+                    <div class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
+                </div>
+                <div class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight" id="metricActiveCount">
+                    0
+                </div>
+                <p class="text-xs text-slate-500 mt-2" id="metricActiveSubtext">
+                    0 suscripciones en facturación
+                </p>
+            </div>
+
+            <!-- Suscripciones Pausadas / Ahorro -->
+            <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 relative overflow-hidden backdrop-blur">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Pausadas / Inactivas</span>
+                    <i class="fa-solid fa-pause text-amber-400 text-xs"></i>
+                </div>
+                <div class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight" id="metricPausedCount">
+                    0
+                </div>
+                <p class="text-xs text-amber-400/80 mt-2 truncate" id="metricSavingsSubtext">
+                    Sin cobros activos programados
+                </p>
+            </div>
+        </section>
+
+        <!-- Filters and Actions Toolbar -->
+        <section class="bg-slate-900/40 border border-slate-800 rounded-2xl p-4 space-y-4">
+            <div class="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
+                
+                <!-- Search bar -->
+                <div class="relative flex-1">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-sm"></i>
+                    <input type="text" id="searchInput" placeholder="Buscar por nombre (ej: Netflix)..." 
+                        class="w-full bg-slate-900 border border-slate-700/70 rounded-xl pl-10 pr-4 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition">
+                </div>
+
+                <!-- Select Filters -->
+                <div class="flex flex-wrap sm:flex-nowrap gap-3">
+                    <!-- Category filter -->
+                    <div class="w-full sm:w-auto min-w-[150px]">
+                        <select id="categoryFilter" class="w-full bg-slate-900 border border-slate-700/70 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-brand-500">
+                            <option value="ALL">Todas las Categorías</option>
+                            <option value="Entretenimiento">Entretenimiento</option>
+                            <option value="Trabajo">Trabajo</option>
+                            <option value="Salud">Salud</option>
+                            <option value="Educación">Educación</option>
+                            <option value="Servicios">Servicios</option>
+                            <option value="Otros">Otros</option>
+                        </select>
+                    </div>
+
+                    <!-- Status filter -->
+                    <div class="w-full sm:w-auto min-w-[140px]">
+                        <select id="statusFilter" class="w-full bg-slate-900 border border-slate-700/70 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-brand-500">
+                            <option value="ALL">Todos los Estados</option>
+                            <option value="Activo">Activos</option>
+                            <option value="Pausado">Pausados</option>
+                        </select>
+                    </div>
+
+                    <!-- Reset Filters Button -->
+                    <button onclick="resetFilters()" title="Limpiar filtros" class="bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl px-3 py-2 text-sm border border-slate-700/60 transition flex items-center justify-center">
+                        <i class="fa-solid fa-rotate-left"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Subscriptions List / Cards Container -->
+        <section class="space-y-3">
+            <div class="flex items-center justify-between px-1">
+                <h2 class="text-base font-semibold text-slate-200 flex items-center gap-2">
+                    <span>Suscripciones</span>
+                    <span id="resultBadgeCount" class="text-xs bg-slate-800 text-slate-400 font-normal px-2.5 py-0.5 rounded-full border border-slate-700">0</span>
+                </h2>
+                
+                <!-- Sort Dropdown -->
+                <div class="flex items-center gap-2 text-xs text-slate-400">
+                    <label for="sortBy" class="hidden sm:inline">Ordenar por:</label>
+                    <select id="sortBy" class="bg-transparent text-slate-300 font-medium focus:outline-none cursor-pointer">
+                        <option value="date" class="bg-slate-900 text-slate-200">Próximo Cobro</option>
+                        <option value="cost-desc" class="bg-slate-900 text-slate-200">Mayor Costo</option>
+                        <option value="cost-asc" class="bg-slate-900 text-slate-200">Menor Costo</option>
+                        <option value="name" class="bg-slate-900 text-slate-200">Nombre (A-Z)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- List Grid -->
+            <div id="subscriptionsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- Dynamic cards inserted via JavaScript -->
+            </div>
+
+            <!-- Empty State -->
+            <div id="emptyState" class="hidden flex-col items-center justify-center py-16 text-center bg-slate-900/30 border border-dashed border-slate-800 rounded-2xl space-y-3">
+                <div class="w-12 h-12 rounded-full bg-slate-800/80 flex items-center justify-center text-slate-500">
+                    <i class="fa-solid fa-receipt text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="font-medium text-slate-300">No se encontraron suscripciones</h3>
+                    <p class="text-xs text-slate-500 mt-1">Prueba ajustar los filtros o agrega un nuevo servicio.</p>
+                </div>
+                <button onclick="openModal()" class="text-xs text-brand-400 hover:text-brand-300 font-medium flex items-center gap-1.5 pt-1">
+                    <i class="fa-solid fa-plus text-[10px]"></i> Agregar servicio
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modal Form (Create / Edit) -->
+    <div id="modalBackdrop" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg shadow-2xl transform transition-all overflow-hidden my-8">
+            
+            <!-- Modal Header -->
+            <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between">
+                <h3 id="modalTitle" class="font-bold text-lg text-white">Agregar Suscripción</h3>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-white text-lg w-8 h-8 rounded-lg flex items-center justify-center hover:bg-slate-800 transition">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Modal Form -->
+            <form id="subscriptionForm" onsubmit="handleFormSubmit(event)" class="p-6 space-y-4">
+                <input type="hidden" id="subId" value="">
+
+                <!-- Nombre -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Nombre del Servicio *</label>
+                    <input type="text" id="subName" required placeholder="Ej: Netflix, Spotify, Gym, Notion..." 
+                        class="w-full bg-slate-950 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500">
+                </div>
+
+                <!-- Costo y Moneda -->
+                <div class="grid grid-cols-3 gap-3">
+                    <div class="col-span-2">
+                        <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Costo *</label>
+                        <input type="number" id="subCost" step="0.01" min="0" required placeholder="0.00" 
+                            class="w-full bg-slate-950 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-brand-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Moneda</label>
+                        <select id="subCurrency" class="w-full bg-slate-950 border border-slate-700/80 rounded-xl px-3 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-brand-500">
+                            <option value="ARS">ARS ($)</option>
+                            <option value="USD">USD (US$)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Ciclo y Categoría -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Ciclo de Facturación</label>
+                        <select id="subCycle" class="w-full bg-slate-950 border border-slate-700/80 rounded-xl px-3 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-brand-500">
+                            <option value="Mensual">Mensual</option>
+                            <option value="Anual">Anual</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Categoría</label>
+                        <select id="subCategory" class="w-full bg-slate-950 border border-slate-700/80 rounded-xl px-3 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-brand-500">
+                            <option value="Entretenimiento">Entretenimiento</option>
+                            <option value="Trabajo">Trabajo</option>
+                            <option value="Salud">Salud</option>
+                            <option value="Educación">Educación</option>
+                            <option value="Servicios">Servicios</option>
+                            <option value="Otros">Otros</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Fecha de próximo cobro y Estado -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Próximo Cobro *</label>
+                        <input type="date" id="subNextBilling" required 
+                            class="w-full bg-slate-950 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-brand-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Estado</label>
+                        <select id="subStatus" class="w-full bg-slate-950 border border-slate-700/80 rounded-xl px-3 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-brand-500">
+                            <option value="Activo">Activo</option>
+                            <option value="Pausado">Pausado</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Modal Actions -->
+                <div class="pt-4 flex items-center justify-end gap-3 border-t border-slate-800/80">
+                    <button type="button" onclick="closeModal()" class="px-4 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="px-5 py-2.5 rounded-xl text-xs font-semibold bg-brand-600 hover:bg-brand-500 text-white shadow-lg shadow-brand-600/30 transition">
+                        Guardar Suscripción
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Notification Toast Container -->
+    <div id="toastContainer" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // Initial Demo Data
+        const initialSubscriptions = [
+            {
+                id: '1',
+                name: 'Netflix Premium',
+                cost: 9500,
+                currency: 'ARS',
+                cycle: 'Mensual',
+                nextBilling: getFutureDate(12),
+                category: 'Entretenimiento',
+                status: 'Activo'
+            },
+            {
+                id: '2',
+                name: 'Spotify Family',
+                cost: 2400,
+                currency: 'ARS',
+                cycle: 'Mensual',
+                nextBilling: getFutureDate(5),
+                category: 'Entretenimiento',
+                status: 'Activo'
+            },
+            {
+                id: '3',
+                name: 'ChatGPT Plus',
+                cost: 20,
+                currency: 'USD',
+                cycle: 'Mensual',
+                nextBilling: getFutureDate(18),
+                category: 'Trabajo',
+                status: 'Activo'
+            },
+            {
+                id: '4',
+                name: 'Gimnasio Pase Libre',
+                cost: 32000,
+                currency: 'ARS',
+                cycle: 'Mensual',
+                nextBilling: getFutureDate(2),
+                category: 'Salud',
+                status: 'Activo'
+            },
+            {
+                id: '5',
+                name: 'Amazon Prime Video',
+                cost: 3999,
+                currency: 'ARS',
+                cycle: 'Mensual',
+                nextBilling: getFutureDate(22),
+                category: 'Entretenimiento',
+                status: 'Pausado'
+            },
+            {
+                id: '6',
+                name: 'Hosting Anual & Dominio',
+                cost: 120,
+                currency: 'USD',
+                cycle: 'Anual',
+                nextBilling: getFutureDate(140),
+                category: 'Trabajo',
+                status: 'Activo'
+            }
+        ];
+
+        // Helper to format sample dates
+        function getFutureDate(daysToAdd) {
+            const date = new Date();
+            date.setDate(date.getDate() + daysToAdd);
+            return date.toISOString().split('T')[0];
+        }
+
+        // Global State
+        let subscriptions = [];
+        let exchangeRate = 1150;
+
+        // Icons for categories
+        const categoryIcons = {
+            'Entretenimiento': 'fa-film text-purple-400',
+            'Trabajo': 'fa-briefcase text-blue-400',
+            'Salud': 'fa-heart-pulse text-emerald-400',
+            'Educación': 'fa-graduation-cap text-amber-400',
+            'Servicios': 'fa-bolt text-cyan-400',
+            'Otros': 'fa-box text-slate-400'
+        };
+
+        // Initialize Application
+        window.addEventListener('DOMContentLoaded', () => {
+            loadFromLocalStorage();
+            setupEventListeners();
+            render();
+        });
+
+        // Load data from localStorage
+        function loadFromLocalStorage() {
+            const stored = localStorage.getItem('subcontrol_subscriptions');
+            if (stored) {
+                try {
+                    subscriptions = JSON.parse(stored);
+                } catch (e) {
+                    subscriptions = [...initialSubscriptions];
+                }
+            } else {
+                subscriptions = [...initialSubscriptions];
+                saveToLocalStorage();
+            }
+
+            const storedRate = localStorage.getItem('subcontrol_exchange_rate');
+            if (storedRate) {
+                exchangeRate = parseFloat(storedRate) || 1150;
+                document.getElementById('usdExchangeRate').value = exchangeRate;
+            }
+        }
+
+        // Save data to localStorage
+        function saveToLocalStorage() {
+            localStorage.setItem('subcontrol_subscriptions', JSON.stringify(subscriptions));
+            localStorage.setItem('subcontrol_exchange_rate', exchangeRate.toString());
+        }
+
+        // Setup event handlers
+        function setupEventListeners() {
+            document.getElementById('searchInput').addEventListener('input', render);
+            document.getElementById('categoryFilter').addEventListener('change', render);
+            document.getElementById('statusFilter').addEventListener('change', render);
+            document.getElementById('sortBy').addEventListener('change', render);
+            
+            const rateInput = document.getElementById('usdExchangeRate');
+            rateInput.addEventListener('change', (e) => {
+                const val = parseFloat(e.target.value);
+                if (val && val > 0) {
+                    exchangeRate = val;
+                    saveToLocalStorage();
+                    render();
+                    showToast('Cotización de cambio actualizada');
+                }
+            });
+        }
+
+        // Render application data and UI
+        function render() {
+            const filtered = getFilteredSubscriptions();
+            renderMetrics();
+            renderGrid(filtered);
+        }
+
+        // Filter and Sort Subscriptions
+        function getFilteredSubscriptions() {
+            const search = document.getElementById('searchInput').value.toLowerCase().trim();
+            const category = document.getElementById('categoryFilter').value;
+            const status = document.getElementById('statusFilter').value;
+            const sortBy = document.getElementById('sortBy').value;
+
+            let result = subscriptions.filter(sub => {
+                const matchesSearch = sub.name.toLowerCase().includes(search);
+                const matchesCategory = category === 'ALL' || sub.category === category;
+                const matchesStatus = status === 'ALL' || sub.status === status;
+                return matchesSearch && matchesCategory && matchesStatus;
+            });
+
+            // Sorting logic
+            result.sort((a, b) => {
+                if (sortBy === 'date') {
+                    return new Date(a.nextBilling) - new Date(b.nextBilling);
+                } else if (sortBy === 'cost-desc') {
+                    return getMonthlyEquivalentInARS(b) - getMonthlyEquivalentInARS(a);
+                } else if (sortBy === 'cost-asc') {
+                    return getMonthlyEquivalentInARS(a) - getMonthlyEquivalentInARS(b);
+                } else if (sortBy === 'name') {
+                    return a.name.localeCompare(b.name);
+                }
+                return 0;
+            });
+
+            return result;
+        }
+
+        // Convert subscription cost to Monthly ARS equivalent
+        function getMonthlyEquivalentInARS(sub) {
+            let costMonthly = sub.cycle === 'Anual' ? (sub.cost / 12) : sub.cost;
+            if (sub.currency === 'USD') {
+                costMonthly *= exchangeRate;
+            }
+            return costMonthly;
+        }
+
+        // Calculate and display metrics
+        function renderMetrics() {
+            let totalMonthlyARS = 0;
+            let activeCount = 0;
+            let pausedCount = 0;
+
+            subscriptions.forEach(sub => {
+                if (sub.status === 'Activo') {
+                    activeCount++;
+                    totalMonthlyARS += getMonthlyEquivalentInARS(sub);
+                } else {
+                    pausedCount++;
+                }
+            });
+
+            const totalMonthlyUSD = totalMonthlyARS / exchangeRate;
+
+            document.getElementById('metricTotalArs').innerHTML = 
+                `$${Math.round(totalMonthlyARS).toLocaleString('es-AR')} <span class="text-sm font-normal text-slate-400">ARS</span>`;
+            
+            document.getElementById('metricTotalUsd').innerHTML = 
+                `US$ ${totalMonthlyUSD.toFixed(2)} <span class="text-sm font-normal text-slate-400">USD</span>`;
+            
+            document.getElementById('metricActiveCount').textContent = activeCount;
+            document.getElementById('metricActiveSubtext').textContent = `${activeCount} servicio${activeCount !== 1 ? 's' : ''} con cobro activo`;
+
+            document.getElementById('metricPausedCount').textContent = pausedCount;
+            document.getElementById('metricSavingsSubtext').textContent = pausedCount > 0 
+                ? `${pausedCount} servicio${pausedCount !== 1 ? 's' : ''} desactivado${pausedCount !== 1 ? 's' : ''}` 
+                : 'Sin suscripciones en pausa';
+        }
+
+        // Render subscription cards
+        function renderGrid(items) {
+            const grid = document.getElementById('subscriptionsGrid');
+            const emptyState = document.getElementById('emptyState');
+            const badgeCount = document.getElementById('resultBadgeCount');
+
+            badgeCount.textContent = items.length;
+            grid.innerHTML = '';
+
+            if (items.length === 0) {
+                emptyState.classList.remove('hidden');
+                emptyState.classList.add('flex');
+                return;
+            } else {
+                emptyState.classList.add('hidden');
+                emptyState.classList.remove('flex');
+            }
+
+            items.forEach(sub => {
+                const isPaused = sub.status === 'Pausado';
+                const monthlyARS = Math.round(getMonthlyEquivalentInARS(sub));
+                
+                // Days remaining for next payment
+                const daysDiff = getDaysRemaining(sub.nextBilling);
+                let daysBadgeClass = 'bg-slate-800 text-slate-400 border-slate-700';
+                let daysText = `en ${daysDiff} días`;
+
+                if (daysDiff < 0) {
+                    daysBadgeClass = 'bg-rose-500/10 text-rose-400 border-rose-500/20';
+                    daysText = `vencido (${Math.abs(daysDiff)} d)`;
+                } else if (daysDiff === 0) {
+                    daysBadgeClass = 'bg-amber-500/10 text-amber-400 border-amber-500/20';
+                    daysText = '¡Hoy!';
+                } else if (daysDiff <= 3) {
+                    daysBadgeClass = 'bg-amber-500/10 text-amber-400 border-amber-500/20';
+                }
+
+                const iconClass = categoryIcons[sub.category] || categoryIcons['Otros'];
+
+                const cardHtml = `
+                    <div class="bg-slate-900/60 border ${isPaused ? 'border-slate-800/60 opacity-60' : 'border-slate-800'} hover:border-slate-700 rounded-2xl p-5 flex flex-col justify-between transition group relative">
+                        
+                        <div>
+                            <!-- Header Card -->
+                            <div class="flex items-start justify-between gap-2 mb-3">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700/60 flex items-center justify-center text-lg">
+                                        <i class="fa-solid ${iconClass}"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-bold text-slate-100 text-base leading-snug group-hover:text-brand-400 transition">${escapeHtml(sub.name)}</h3>
+                                        <span class="text-[11px] font-medium text-slate-400">${sub.category}</span>
+                                    </div>
+                                </div>
+                                <span class="px-2 py-0.5 text-[10px] uppercase tracking-wider font-semibold rounded-full border ${sub.status === 'Activo' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-slate-800 text-slate-400 border-slate-700'}">
+                                    ${sub.status}
+                                </span>
+                            </div>
+
+                            <!-- Pricing -->
+                            <div class="my-4 bg-slate-950/40 rounded-xl p-3 border border-slate-800/80">
+                                <div class="flex items-baseline justify-between">
+                                    <span class="text-2xl font-extrabold text-white">
+                                        ${sub.currency === 'USD' ? 'US$' : '$'}${sub.cost.toLocaleString('es-AR')}
+                                    </span>
+                                    <span class="text-xs font-semibold px-2 py-0.5 rounded bg-slate-800 text-slate-300 uppercase">
+                                        ${sub.cycle}
+                                    </span>
+                                </div>
+                                ${sub.cycle === 'Anual' ? `
+                                    <p class="text-[11px] text-slate-400 mt-1">
+                                        Prórroga mensual: ~$${monthlyARS.toLocaleString('es-AR')} ARS/mes
+                                    </p>
+                                ` : ''}
+                                ${sub.currency === 'USD' ? `
+                                    <p class="text-[11px] text-emerald-400/90 mt-0.5">
+                                        Equiv: ~$${monthlyARS.toLocaleString('es-AR')} ARS/mes
+                                    </p>
+                                ` : ''}
+                            </div>
+                        </div>
+
+                        <!-- Card Footer & Actions -->
+                        <div class="pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs">
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-slate-500">Cobro:</span>
+                                <span class="px-2 py-0.5 text-[11px] font-medium rounded-full border ${daysBadgeClass}">
+                                    ${formatDate(sub.nextBilling)} (${daysText})
+                                </span>
+                            </div>
+
+                            <div class="flex items-center gap-1">
+                                <!-- Pause / Activate button -->
+                                <button onclick="toggleStatus('${sub.id}')" title="${sub.status === 'Activo' ? 'Pausar' : 'Activar'}" class="p-1.5 text-slate-400 hover:text-amber-400 hover:bg-slate-800 rounded-lg transition">
+                                    <i class="fa-solid ${sub.status === 'Activo' ? 'fa-pause' : 'fa-play'}"></i>
+                                </button>
+                                <!-- Edit button -->
+                                <button onclick="editSubscription('${sub.id}')" title="Editar" class="p-1.5 text-slate-400 hover:text-brand-400 hover:bg-slate-800 rounded-lg transition">
+                                    <i class="fa-solid fa-pen"></i>
+                                </button>
+                                <!-- Delete button -->
+                                <button onclick="deleteSubscription('${sub.id}')" title="Eliminar" class="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-slate-800 rounded-lg transition">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+                `;
+                grid.insertAdjacentHTML('beforeend', cardHtml);
+            });
+        }
+
+        // Modal Controls
+        function openModal(editId = null) {
+            const modal = document.getElementById('modalBackdrop');
+            const form = document.getElementById('subscriptionForm');
+            const title = document.getElementById('modalTitle');
+
+            form.reset();
+            document.getElementById('subId').value = '';
+
+            if (editId) {
+                const sub = subscriptions.find(s => s.id === editId);
+                if (sub) {
+                    title.textContent = 'Editar Suscripción';
+                    document.getElementById('subId').value = sub.id;
+                    document.getElementById('subName').value = sub.name;
+                    document.getElementById('subCost').value = sub.cost;
+                    document.getElementById('subCurrency').value = sub.currency;
+                    document.getElementById('subCycle').value = sub.cycle;
+                    document.getElementById('subCategory').value = sub.category;
+                    document.getElementById('subNextBilling').value = sub.nextBilling;
+                    document.getElementById('subStatus').value = sub.status;
+                }
+            } else {
+                title.textContent = 'Nueva Suscripción';
+                // Default date: 30 days from now
+                document.getElementById('subNextBilling').value = getFutureDate(30);
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('modalBackdrop').classList.add('hidden');
+        }
+
+        // Form Submission (Create or Update)
+        function handleFormSubmit(event) {
+            event.preventDefault();
+
+            const id = document.getElementById('subId').value;
+            const name = document.getElementById('subName').value.trim();
+            const cost = parseFloat(document.getElementById('subCost').value);
+            const currency = document.getElementById('subCurrency').value;
+            const cycle = document.getElementById('subCycle').value;
+            const category = document.getElementById('subCategory').value;
+            const nextBilling = document.getElementById('subNextBilling').value;
+            const status = document.getElementById('subStatus').value;
+
+            if (!name || isNaN(cost) || !nextBilling) {
+                showToast('Por favor completa todos los campos requeridos', 'error');
+                return;
+            }
+
+            if (id) {
+                // Edit existing
+                const index = subscriptions.findIndex(s => s.id === id);
+                if (index !== -1) {
+                    subscriptions[index] = { id, name, cost, currency, cycle, nextBilling, category, status };
+                    showToast('Suscripción actualizada correctamente');
+                }
+            } else {
+                // Create new
+                const newSub = {
+                    id: Date.now().toString(),
+                    name,
+                    cost,
+                    currency,
+                    cycle,
+                    nextBilling,
+                    category,
+                    status
+                };
+                subscriptions.push(newSub);
+                showToast('Suscripción guardada');
+            }
+
+            saveToLocalStorage();
+            render();
+            closeModal();
+        }
+
+        // Edit Trigger
+        function editSubscription(id) {
+            openModal(id);
+        }
+
+        // Delete Subscription
+        function deleteSubscription(id) {
+            const sub = subscriptions.find(s => s.id === id);
+            if (!sub) return;
+
+            // Custom UI confirmation toast/action
+            if (confirm(`¿Estás seguro de que deseas eliminar "${sub.name}"?`)) {
+                subscriptions = subscriptions.filter(s => s.id !== id);
+                saveToLocalStorage();
+                render();
+                showToast('Suscripción eliminada');
+            }
+        }
+
+        // Toggle Status (Activo / Pausado)
+        function toggleStatus(id) {
+            const sub = subscriptions.find(s => s.id === id);
+            if (sub) {
+                sub.status = sub.status === 'Activo' ? 'Pausado' : 'Activo';
+                saveToLocalStorage();
+                render();
+                showToast(`Servicio ${sub.status === 'Activo' ? 'activado' : 'pausado'}`);
+            }
+        }
+
+        // Reset Filters
+        function resetFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('categoryFilter').value = 'ALL';
+            document.getElementById('statusFilter').value = 'ALL';
+            document.getElementById('sortBy').value = 'date';
+            render();
+        }
+
+        // Utility: Toast notifications
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            
+            const bgColor = type === 'error' ? 'bg-rose-900/90 border-rose-700 text-rose-200' : 'bg-slate-900 border-slate-700 text-slate-100';
+            const icon = type === 'error' ? 'fa-circle-exclamation text-rose-400' : 'fa-circle-check text-emerald-400';
+
+            toast.className = `pointer-events-auto px-4 py-3 rounded-xl border ${bgColor} shadow-xl text-xs font-medium flex items-center gap-2.5 transition transform translate-y-2 opacity-0 duration-300 backdrop-blur`;
+            toast.innerHTML = `<i class="fa-solid ${icon}"></i> <span>${escapeHtml(message)}</span>`;
+
+            container.appendChild(toast);
+
+            // Animate In
+            setTimeout(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            }, 10);
+
+            // Remove Toast
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // Helper: Calculate days between now and billing date
+        function getDaysRemaining(dateString) {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            const [year, month, day] = dateString.split('-').map(Number);
+            const billingDate = new Date(year, month - 1, day);
+            billingDate.setHours(0, 0, 0, 0);
+
+            const diffTime = billingDate - today;
+            return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        }
+
+        // Helper: Format ISO date string to DD/MM/YYYY
+        function formatDate(dateString) {
+            if (!dateString) return '';
+            const [year, month, day] = dateString.split('-');
+            return `${day}/${month}/${year}`;
+        }
+
+        // Helper: Escape HTML string
+        function escapeHtml(str) {
+            return str.replace(/[&<>"']/g, function(m) {
+                return {
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#039;'
+                }[m];
+            });
+        }
+    </script>
+</body>
+</html>
